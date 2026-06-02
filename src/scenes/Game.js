@@ -16,6 +16,11 @@ export default class Game extends Phaser.Scene {
         // Carica i versi del Capybara
         this.load.audio('verso_1', 'assets/audio/capybara_sound_1.mp3');
         this.load.audio('verso_2', 'assets/audio/capybara_sound_2.mp3');
+
+        // Carica gli sprite del cibo
+        this.load.image('pomodoro', 'assets/images/tomato.png');
+        this.load.image('foglia', 'assets/images/leaf.png');
+        this.load.image('anguria', 'assets/images/watermelon.png');
     }
 
     create() {    
@@ -32,6 +37,10 @@ export default class Game extends Phaser.Scene {
 
         // Inizzializzazione dell'UI Manager
         this.ui = new UiManager(this);
+
+        // Impostiamo i confini del mondo fisico: X=0, Y=0, Larghezza totale, Altezza ridotta per lasciare spazio all'HUD
+        const altezzaMondoFisico = height - 120; // Blocco a 120 pixel dal fondo (regolabile in base all'altezza dell'HUD)
+        this.physics.world.setBounds(0, 0, width, altezzaMondoFisico);
     }
 
     update() {
@@ -45,5 +54,48 @@ export default class Game extends Phaser.Scene {
             this.ui.disegna(this.capybara);
         }
 
+    }
+
+    spawnCibo(idCibo) {
+        // CONTROLLO: Se esiste già un cibo sullo schermo, interrompiamo la funzione e non facciamo nulla
+        if (this.ciboCorrente && this.ciboCorrente.active) {
+            console.log("Scena Game: C'è già del cibo sullo schermo! Finisci questo prima.");
+            return; 
+        }
+
+        console.log(`Scena Game: Spawno il cibo di tipo ${idCibo}`);
+
+        const width = this.cameras.main.width;
+        const height = this.cameras.main.height;
+
+        // Creiamo l'oggetto fisico del cibo al centro dello schermo
+        // Usiamo l'idCibo come chiave della texture (es. 'pomodoro')
+        this.ciboCorrente = this.physics.add.image(width / 2, height / 2, idCibo);
+        this.ciboCorrente.setScale(0.08); // Regola la scala in base alla dimensione della tua immagine
+        this.ciboCorrente.body.setAllowGravity(true); // Niente gravità, deve fluttuare finché non lo trasciniamo
+        this.ciboCorrente.setCollideWorldBounds(true); // Dice al cibo di scontrarsi con i confini del mondo
+        this.ciboCorrente.setBounce(0.3);
+
+        // Abilitiamo il Drag & Drop (Trascinamento) su Phaser per questo oggetto
+        this.ciboCorrente.setInteractive({ draggable: true });
+
+        // 1. INIZIO TRASCINAMENTO: Quando il giocatore afferra il cibo
+        this.ciboCorrente.on('dragstart', (pointer) => {
+            // Disattiviamo la gravità e azzeriamo la velocità così non cade mentre lo teniamo in mano
+            this.ciboCorrente.body.setAllowGravity(false);
+            this.ciboCorrente.setVelocity(0, 0);
+        });
+
+        // 2.DURANTE IL TRASCINAMENTO: Segue il movimento del mouse/dito
+        this.ciboCorrente.on('drag', (pointer, dragX, dragY) => {
+            this.ciboCorrente.x = dragX;
+            this.ciboCorrente.y = dragY;
+        });
+
+        // 3. FINE TRASCINAMENTO: Quando il giocatore rilascia il cibo
+        this.ciboCorrente.on('dragend', (pointer) => {
+            // Riattiviamo la gravità per farlo cadere di nuovo se non ha toccato il capibara
+            this.ciboCorrente.body.setAllowGravity(true);
+        });
     }
 }

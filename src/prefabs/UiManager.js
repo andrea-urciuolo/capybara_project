@@ -193,10 +193,16 @@ export default class UiManager {
         testoCibo.on('pointerover', () => testoCibo.setStyle({ fill: '#f1c40f' }));
         testoCibo.on('pointerout', () => testoCibo.setStyle({ fill: '#ffffff' }));
 
-        // Evento di selezione del cibo (per ora fa solo un log)
+        // Evento di selezione del cibo modificato
         testoCibo.on('pointerdown', () => {
             console.log(`Hai selezionato: ${cibo.id}`);
-            // Qui in futuro faremo chiudere il menu e spawnare l'oggetto trascinabile!
+            
+            // 1. Diciamo alla scena di spawnare il cibo specifico
+            this.scene.spawnCibo(cibo.id);
+
+            // 2. Chiudiamo il menu del cibo automaticamente per liberare la visuale
+            this.menuCiboAperto = false;
+            this.pannelloCibo.setVisible(false);
         });
 
         // Aggiungiamo il testo del cibo al contenitore del pannello
