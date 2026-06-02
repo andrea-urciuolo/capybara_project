@@ -1,12 +1,18 @@
 import Phaser from 'phaser';
+import Game from './scenes/Game.js';
 
 // Configurazione globale del gioco Phaser
 const config = {
     type: Phaser.AUTO, // Sceglie automaticamente WebGL o Canvas in base al dispositivo
-    width: 800,        // Larghezza logica del gioco (Phaser la scalerà per il telefono)
-    height: 600,       // Altezza logica del gioco
+    width: 600,        // Larghezza logica del gioco (Phaser la scalerà per il telefono)
+    height: 800,       // Altezza logica del gioco
     parent: 'game-container', // L'ID del div che abbiamo creato in index.html
     backgroundColor: '#34495e', // Un bel colore grigio/blu per lo sfondo del gioco
+
+    scale: {
+        mode: Phaser.Scale.FIT, // Adatta il gioco allo schermo mantenendo le proporzioni
+        autoCenter: Phaser.Scale.CENTER_BOTH // Centra il gioco sia in orizzontale che in verticale
+    },
     
     // Configurazione della fisica (essenziale per far muovere il Capibara!)
     physics: {
@@ -17,22 +23,7 @@ const config = {
         }
     },
     
-    // Scena temporanea di test per verificare che tutto funzioni
-    scene: {
-        preload: function() {
-            // Qui caricheremo gli asset in futuro
-        },
-        create: function() {
-            // Testiamo se Phaser risponde stampando un testo a schermo
-            this.add.text(400, 300, 'Capybara in Caricamento...', {
-                fontSize: '32px',
-                fill: '#ffffff'
-            }).setOrigin(0.5);
-        },
-        update: function() {
-            // Game Loop temporaneo
-        }
-    }
+    scene: [Game]
 };
 
 // Inizializziamo il gioco passando la configurazione
