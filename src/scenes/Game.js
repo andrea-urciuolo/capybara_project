@@ -7,20 +7,22 @@ export default class Game extends Phaser.Scene {
 
     preload() {
         console.log('Scena Game: Preload in corso...');
+        this.load.image('player', 'assets/images/capybara.png');
     }
 
     create() {
     console.log('Scena Game: Creata con successo!');
     
-    // Recuperiamo le dimensioni della "finestra di gioco" corrente
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
     
-    // Posizioniamo il testo usando le variabili dinamiche (width / 2 e height / 2 è il centro esatto)
-    this.add.text(width / 2, height / 2, 'Il Capibara non resiste più...', {
+    this.add.text(width / 2, height / 4, 'Capybara Deh', {
         fontSize: '32px',
         fill: '#00ff00'
     }).setOrigin(0.5);
+
+    this.player = this.add.image(width / 2, height / 2, 'player');
+    this.player.setScale(0.3);
 }
 
     update() {

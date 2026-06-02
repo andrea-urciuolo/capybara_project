@@ -8,6 +8,7 @@ const config = {
     height: 800,       // Altezza logica del gioco
     parent: 'game-container', // L'ID del div che abbiamo creato in index.html
     backgroundColor: '#34495e', // Un bel colore grigio/blu per lo sfondo del gioco
+    pixelArt: true,
 
     scale: {
         mode: Phaser.Scale.FIT, // Adatta il gioco allo schermo mantenendo le proporzioni
