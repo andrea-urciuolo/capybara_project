@@ -23,6 +23,14 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         this.walkSpeed = 100;
         this.azioneTimer = null;
 
+        // Statistiche del Capybara (da 0 a 100)
+        this.fame = 100;
+        this.felicita = 80;
+        this.energia = 100;
+
+        // Avvio il ciclo di degrado dei bisogni
+        this.avviaCicloBisogni();
+
         // Gestione degli eventi di input
         this.setupInput();
 
@@ -32,6 +40,9 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
 
     setupInput() {
         this.on('pointerdown', () => {
+            // Alza la felicità del Capybara ogni click di +5
+            this.felicita = Math.min(100, this.felicita + 5);
+
             // Scelta casuale del verso
             const sceltaSuono = Phaser.Math.Between(1, 2);
             this.scene.sound.play(`verso_${sceltaSuono}`, { volume: 0.5 });
@@ -86,5 +97,28 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
             this.targetX = Phaser.Math.Between(50, larghezzaSchermo - 50);
             this.capybaraState = 'walk';
         }, [], this);
+    }
+
+    avviaCicloBisogni() {
+        this.scene.time.addEvent({
+            delay: 3000,
+            callback: () => {
+                // Riduce la fame e l'energia ogni 3 secondi 
+                this.fame = Math.max(0, this.fame - 2);
+                this.energia = Math.max(0, this.energia - 1);
+
+                // Se il Capybara è molto affamato o stanco, la felicità cala più velocemente
+                if (this.fame < 30 || this.energia < 30) {
+                    this.felicita = Math.max(0, this.felicita - 3);
+                } else {
+                    this.felicita = Math.max(0, this.felicita - 0.5);
+                }
+
+                // Stampiamo in console lo stato per verificare che stia scendendo
+                console.log(`Stato Capibara -> Fame: ${this.fame} | Energia: ${this.energia} | Felicità: ${this.felicita}`);
+            },
+            callbackScope: this,
+            loop: true
+        });
     }
 }
