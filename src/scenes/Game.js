@@ -56,7 +56,7 @@ export default class Game extends Phaser.Scene {
 
     }
 
-    spawnCibo(idCibo) {
+    spawnCibo(idCibo, valoreRicarica) {
         // CONTROLLO: Se esiste già un cibo sullo schermo, interrompiamo la funzione e non facciamo nulla
         if (this.ciboCorrente && this.ciboCorrente.active) {
             console.log("Scena Game: C'è già del cibo sullo schermo! Finisci questo prima.");
@@ -64,6 +64,9 @@ export default class Game extends Phaser.Scene {
         }
 
         console.log(`Scena Game: Spawno il cibo di tipo ${idCibo}`);
+
+        // Salviamo il valore di ricarica in una variabile di istanza della scena
+        this.ricaricaCiboCorrente = valoreRicarica;
 
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
@@ -97,5 +100,40 @@ export default class Game extends Phaser.Scene {
             // Riattiviamo la gravità per farlo cadere di nuovo se non ha toccato il capibara
             this.ciboCorrente.body.setAllowGravity(true);
         });
+
+        // Controlliamo se il cibo tocca il capibara
+        this.physics.add.overlap(this.capybara, this.ciboCorrente, () => {
+            this.manciaCibo();
+        }, null, this);
     }
+
+    manciaCibo() {
+        // Sicurezza: se per qualche motivo il cibo è già stato rimosso, usciamo
+        if (!this.ciboCorrente || !this.ciboCorrente.active) return;
+
+        // Default di sicurezza: se la variabile non è definita per qualche motivo, usa 15
+        const puntiRicarica = this.ricaricaCiboCorrente || 15;
+
+        console.log("Scena Game: Il Capibara ha mangiato!");
+
+        // 1. Ricarichiamo la fame del Capibara (es. di 20 punti, massimo 100)
+        this.capybara.fame = Math.min(100, this.capybara.fame + puntiRicarica);
+
+        // 2. Facciamo fare un verso di gioia al Capibara
+        const versoCasuale = Phaser.Math.Between(1, 2);
+        this.sound.play(`verso_${versoCasuale}`, { volume: 0.6 }); // TODO: Aggiungi suoni nuovi per aver mangiato
+
+        // 3. Facciamo fare un piccolo sobbalzo al Capibara per dare feedback visivo
+        this.tweens.add({
+            targets: this.capybara,
+            scaleX: 0.35, // Si allarga un secondo
+            scaleY: 0.25, // Si schiaccia (effetto masticazione/gioia)
+            duration: 100,
+            yoyo: true,
+            ease: 'Quad.easeInOut'
+        });
+
+        // 4. Distruggiamo definitivamente l'oggetto cibo dal motore di gioco
+        this.ciboCorrente.destroy();
+}
 }

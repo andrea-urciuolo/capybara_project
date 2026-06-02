@@ -16,9 +16,9 @@ export default class UiManager {
         // --- INVENTARIO PROVVISORIO ---
         // Una lista di cibi disponibili e la loro quantità
         this.inventarioCibo = [
-            { id: 'pomodoro', nome: 'Pomodoro 🍅', quantita: 5 },
-            { id: 'foglia', nome: 'Fogliolina 🌿', quantita: 3 },
-            { id: 'anguria', nome: 'Anguria 🍉', quantita: 1 }
+            { id: 'pomodoro', nome: 'Pomodoro 🍅', quantita: 5 , ricarica: 15 },
+            { id: 'foglia', nome: 'Fogliolina 🌿', quantita: 3 , ricarica: 25 },
+            { id: 'anguria', nome: 'Anguria 🍉', quantita: 1 , ricarica: 50 }
         ];
 
         // Variabile di stato per capire se il menu del cibo è aperto o chiuso
@@ -195,12 +195,45 @@ export default class UiManager {
 
         // Evento di selezione del cibo modificato
         testoCibo.on('pointerdown', () => {
-            console.log(`Hai selezionato: ${cibo.id}`);
-            
-            // 1. Diciamo alla scena di spawnare il cibo specifico
-            this.scene.spawnCibo(cibo.id);
+            // CONTROLLO: Se il cibo è finito, blocca tutto
+            if (cibo.quantita <= 0) {
+                console.log(`HUD: ${cibo.nome} esaurito! Comprane altro allo SHOP.`);
+                
+                // Effetto visivo flash rosso sul testo per far capire che è vuoto
+                this.scene.tweens.add({
+                    targets: testoCibo,
+                    alpha: 0.3,
+                    duration: 100,
+                    yoyo: true,
+                    repeat: 1
+                });
+                return;
+            }
 
-            // 2. Chiudiamo il menu del cibo automaticamente per liberare la visuale
+            // CONTROLLO EXTRA: Controlliamo se c'è già un cibo fisico sullo schermo 
+            // (Evita di scalare l'inventario se la scena rifiuterà lo spawn)
+            if (this.scene.ciboCorrente && this.scene.ciboCorrente.active) {
+                console.log("HUD: C'è già cibo sullo schermo, non puoi consumarne altro adesso.");
+                return;
+            }
+
+            // 1. Riduciamo la quantità nell'inventario logico
+            cibo.quantita--;
+
+            // 2. Aggiorniamo visivamente il testo del pulsante (es: "Pomodoro 🍅\nx4")
+            testoCibo.setText(`${cibo.nome}\nx${cibo.quantita}`);
+
+            // Se è arrivato a zero, coloriamo lo sfondo di grigio scuro per indicare che è vuoto
+            if (cibo.quantita === 0) {
+                testoCibo.setStyle({ fill: '#7f8c8d' });
+            }
+
+            console.log(`Hai selezionato: ${cibo.id}. Rimasti: ${cibo.quantita}`);
+            
+            // 3. Diciamo alla scena di spawnare l'oggetto
+            this.scene.spawnCibo(cibo.id, cibo.ricarica);
+
+            // 4. Chiudiamo il menu
             this.menuCiboAperto = false;
             this.pannelloCibo.setVisible(false);
         });
