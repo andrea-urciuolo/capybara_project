@@ -13,8 +13,25 @@ export default class UiManager {
         this.larghezzaMax = 150;
         this.altezza = 15;
 
+        // --- INVENTARIO PROVVISORIO ---
+        // Una lista di cibi disponibili e la loro quantità
+        this.inventarioCibo = [
+            { id: 'pomodoro', nome: 'Pomodoro 🍅', quantita: 5 },
+            { id: 'foglia', nome: 'Fogliolina 🌿', quantita: 3 },
+            { id: 'anguria', nome: 'Anguria 🍉', quantita: 1 }
+        ];
+
+        // Variabile di stato per capire se il menu del cibo è aperto o chiuso
+        this.menuCiboAperto = false;
+
         // Crea l'HUD dei pulsanti in basso
         this.creaPulsantiHUD();
+
+        // Crea il tasto per lo Shop
+        this.creaPulsanteShop();
+
+        // Crea il menu per il cibo
+        this.creaMenuCibo();
     }
 
     // Questo metodo si occupa di disegnare le barre prendendo i dati dal capYbara
@@ -91,8 +108,102 @@ export default class UiManager {
     }
 
     gestisciClickPulsante(tipoAttivita) {
-        // Per ora stampiamo solo un log in console per verificare che funzioni.
-        // In futuro qui faremo comunicare l'UI con il Capibara o lanceremo eventi!
+    if (tipoAttivita === 'SHOP') {
+        console.log("HUD: Apertura del negozio... (Feature da implementare nel futuro!)");
+    } else if (tipoAttivita === 'CIBO') {
+        // Invertiamo lo stato del menu (se è aperto si chiude, se è chiuso si apre)
+        this.menuCiboAperto = !this.menuCiboAperto;
+        
+        // Mostriamo o nascondiamo il pannello in base allo stato
+        this.pannelloCibo.setVisible(this.menuCiboAperto);
+        
+        console.log(`HUD: Menu cibo modificato. Stato aperto: ${this.menuCiboAperto}`);
+    } else {
         console.log(`HUD: Premuto il pulsante ${tipoAttivita}`);
+        // Se premiamo un altro pulsante (es: GIOCO), per sicurezza nascondiamo il menu cibo
+        this.menuCiboAperto = false;
+        this.pannelloCibo.setVisible(false);
     }
+}
+
+    creaPulsanteShop() {
+        const width = this.scene.cameras.main.width;
+
+        // Posizioniamo il tasto Shop in alto a destra
+        const shopX = width - 40;
+        const shopY = 50;
+
+        // Creiamo il testo del pulsante Shop
+        this.btnShop = this.scene.add.text(shopX, shopY, 'SHOP 🛒', {
+            fontSize: '18px',
+            fill: '#ffffff',
+            backgroundColor: '#e74c3c', // Un bel colore rosso/corallo per farlo risaltare
+            padding: { x: 12, y: 8 },
+            align: 'center'
+        })
+        .setOrigin(1, 0) // Impostiamo l'origine in alto a destra (1, 0) per allinearlo perfettamente al bordo dello schermo
+        .setInteractive({ useHandCursor: true });
+
+        // Effetti visivi Hover
+        this.btnShop.on('pointerover', () => this.btnShop.setStyle({ fill: '#f1c40f' }));
+        this.btnShop.on('pointerout', () => this.btnShop.setStyle({ fill: '#ffffff' }));
+
+        // Gestione del Click
+        this.btnShop.on('pointerdown', () => {
+            this.gestisciClickPulsante('SHOP');
+        });
+    }
+
+    creaMenuCibo() {
+    const width = this.scene.cameras.main.width;
+    const height = this.scene.cameras.main.height;
+
+    // 1. Creiamo il Contenitore principale del menu
+    this.pannelloCibo = this.scene.add.container(0, 0);
+
+    // 2. Disegnamo lo sfondo del menu (un rettangolo grigio scuro sopra i pulsanti dell'HUD)
+    const sfondoY = height - 150; // Posizionato appena sopra i pulsanti principali
+    const graficoSfondo = this.scene.add.graphics();
+    graficoSfondo.fillStyle(0x2c3e50, 0.95); // Colore blu notte semi-trasparente
+    graficoSfondo.fillRect(10, sfondoY, width - 20, 60); // Alto 60px che occupa quasi tutta la larghezza
+    
+    // Aggiungiamo la grafica dello sfondo al contenitore
+    this.pannelloCibo.add(graficoSfondo);
+
+    // 3. Cicliamo il nostro inventario per stampare i testi dei cibi dentro il menu
+    const spazioDisponibile = width - 40;
+    const intervalloX = spazioDisponibile / this.inventarioCibo.length;
+
+    this.inventarioCibo.forEach((cibo, index) => {
+        const ciboX = 20 + (intervalloX * index) + (intervalloX / 2);
+        const ciboY = sfondoY + 30; // Centrato verticalmente nel pannello
+
+        // Creiamo il testo del singolo cibo
+        const testoCibo = this.scene.add.text(ciboX, ciboY, `${cibo.nome}\nx${cibo.quantita}`, {
+            fontSize: '14px',
+            fill: '#ffffff',
+            align: 'center',
+            backgroundColor: '#34495e',
+            padding: { x: 6, y: 4 }
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+        // Effetti hover sul cibo
+        testoCibo.on('pointerover', () => testoCibo.setStyle({ fill: '#f1c40f' }));
+        testoCibo.on('pointerout', () => testoCibo.setStyle({ fill: '#ffffff' }));
+
+        // Evento di selezione del cibo (per ora fa solo un log)
+        testoCibo.on('pointerdown', () => {
+            console.log(`Hai selezionato: ${cibo.id}`);
+            // Qui in futuro faremo chiudere il menu e spawnare l'oggetto trascinabile!
+        });
+
+        // Aggiungiamo il testo del cibo al contenitore del pannello
+        this.pannelloCibo.add(testoCibo);
+    });
+
+    // 4. DI BASE IL PANNELLO DEVE ESSERE NASCOSTO
+    this.pannelloCibo.setVisible(false);
+}
 }
