@@ -23,6 +23,7 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         this.capybaraState = 'idle';
         this.walkSpeed = 100;
         this.azioneTimer = null;
+        this.isJumping = false;
 
         // Statistiche del Capybara (da 0 a 100)
         this.fame = 100;
@@ -48,30 +49,39 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
 
     setupInput() {
         this.on('pointerdown', () => {
+            // CONTROLLO: Se il capybara sta saltando gli impedisce di saltare di nuovo
+            if (this.isJumping) return;
+
             // STATO: DORMENDO
             if (this.capybaraState === 'sleep') {
+                this.isJumping = true;
                 this.scene.sound.play('verso_1', { volume: 0.7 });
 
-                // Riduce la felicità del capybara se il risveglio è forzato
+                // Riduce le statistiche del capybara se il risveglio è forzato
                 this.felicita = Math.max(0, this.felicita - 15);
+                this.fame = Math.max(0, this.fame - 3);
 
                 this.capybaraState = 'idle';
+
+                // Memorizziamo la Y di partenza reale a terra prima del salto
+                const quotaTerra = this.y;
 
                 // Animazione di sobbalzo di spavento
                 this.scene.tweens.add({
                     targets: this,
                     angle: 0,
                     scaleY: 0.3,
-                    y: this.y - 40,
+                    y: quotaTerra - 40,
                     duration: 250,
                     ease: 'Cubic.easeOut',
                     onComplete: () => {
                         this.scene.tweens.add({
                             targets: this,
-                            y: this.y + 40,
+                            y: quotaTerra,
                             duration: 200,
                             ease: 'Bounce.easeOut',
                             onComplete: () => {
+                                this.isJumping = false;
                                 this.scene.impostaNotte(false);
                             }
                         });
@@ -82,7 +92,12 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
             }
 
             // STATO: SVEGLIO
+            this.isJumping = true;
+
+            // Modifica le statistiche del capybara
             this.felicita = Math.min(100, this.felicita + 5);
+            this.fame = Math.max(0, this.fame - 2);
+            this.energia = Math.max(0, this.energia - 1);
 
             // Scelta random del verso
             const sceltaSuono = Phaser.Math.Between(1, 2);
@@ -91,14 +106,19 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
             this.setVelocityX(0);
             this.capybaraState = 'idle';
 
+            // Memorizziamo la Y di partenza reale prima del salto
+            const quotaTerraStandard = this.y;
+
             // Codice del sobbalzo
             this.scene.tweens.add({
                 targets: this,
-                y: this.y - 20,
+                y: quotaTerraStandard - 20,
                 duration: 100,
                 yoyo: true,
                 ease: 'Quad.easeInOut',
                 onComplete: () => {
+                    this.y = quotaTerraStandard;
+                    this.isJumping = false;
                     this.pianificaProssimaAzione();
                 }
             });
