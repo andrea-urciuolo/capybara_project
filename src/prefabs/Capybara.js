@@ -130,6 +130,29 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         });
     }
 
+    mangia(cibo) {
+        if (!cibo || !cibo.active) return;
+
+        // Incrementa la fame usando il valore specifico del cibo
+        this.fame = Math.min(100, this.fame + cibo.ricarica);
+
+        // Suono e animazione (gestiti dal Capybara)
+        const versoCasuale = Phaser.Math.Between(1, 2);
+        this.scene.sound.play(`verso_${versoCasuale}`, { volume: 0.6 });
+
+        this.scene.tweens.add({
+            targets: this,
+            scaleX: 0.35,
+            scaleY: 0.25,
+            duration: 100,
+            yoyo: true,
+            ease: 'Quad.easeInOut'
+        });
+
+        // Il cibo viene distrutto
+        cibo.destroy();
+    }
+
     usaCibo(idCibo) {
         if (this.inventario[idCibo] && this.inventario[idCibo] > 0) {
             this.inventario[idCibo]--;
