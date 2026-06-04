@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { CIBI_DATABASE } from '../config/CiboConfig.js';
 
 export default class UiManager {
     constructor(scene) {
@@ -13,14 +14,6 @@ export default class UiManager {
         this.larghezzaMax = 150;
         this.altezza = 15;
 
-        // --- INVENTARIO PROVVISORIO ---
-        // Una lista di cibi disponibili e la loro quantità
-        this.inventarioCibo = [
-            { id: 'pomodoro', nome: 'Pomodoro 🍅', quantita: 5 , ricarica: 15 },
-            { id: 'foglia', nome: 'Fogliolina 🌿', quantita: 3 , ricarica: 25 },
-            { id: 'anguria', nome: 'Anguria 🍉', quantita: 1 , ricarica: 50 }
-        ];
-
         // Variabile di stato per capire se il menu del cibo è aperto o chiuso
         this.menuCiboAperto = false;
 
@@ -31,7 +24,7 @@ export default class UiManager {
         this.creaPulsanteShop();
 
         // Crea il menu per il cibo
-        this.creaMenuCibo();
+        this.inizializzaPannelloCibo();
     }
 
     // Questo metodo si occupa di disegnare le barre prendendo i dati dal capYbara
@@ -70,20 +63,18 @@ export default class UiManager {
         // Posiziono i pulsanti nella parte bassa
         const pulsantiY = height - 80; 
 
-        // Definisco i nomi delle 4 attività principali del nostro Tamagotchi
+        // Definizione dei 4 nomi delle attività principali
         const attivita = ['CIBO', 'GIOCO', 'SONNO', 'LAVAGGIO'];
         
-        // Calcolio lo spazio orizzontale in modo che i 4 pulsanti siano distribuiti equamente
+        // Calcolo lo spazio orizzontale in modo che i 4 pulsanti siano distribuiti equamente
         const spazioDisponibile = width - 40; // Margine di 20px ai lati
         const intervalloX = spazioDisponibile / 4;
 
-        this.pulsanti = [];
-
         attivita.forEach((nome, index) => {
-            // Calcoliamo la X di ogni pulsante per metterli in riga
+            // Calcolio la X di ogni pulsante per metterli in riga
             const pulsanteX = 20 + (intervalloX * index) + (intervalloX / 2);
 
-            // Creiamo un testo cliccabile che faccia da pulsante provvisorio
+            // Creo un testo cliccabile che faccia da pulsante -- PROVVISORIO --
             const btn = this.scene.add.text(pulsanteX, pulsantiY, nome, {
                 fontSize: '20px',
                 fill: '#ffffff',
@@ -91,158 +82,148 @@ export default class UiManager {
                 padding: { x: 10, y: 10 },
                 align: 'center'
             })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true }); // Cambia il cursore in una manina su PC
+            .setOrigin(0.5).setInteractive({ useHandCursor: true }); // Cambia il cursore in una manina su PC
 
             // Gestione visiva dell'effetto "Hover" (quando ci passi sopra col mouse)
             btn.on('pointerover', () => btn.setStyle({ fill: '#f1c40f' }));
             btn.on('pointerout', () => btn.setStyle({ fill: '#ffffff' }));
 
             // Gestione del Click / Touch
-            btn.on('pointerdown', () => {
-                this.gestisciClickPulsante(nome);
-            });
-
-            this.pulsanti.push(btn);
+            btn.on('pointerdown', () => this.gestisciClickPulsante(nome));
         });
     }
 
+    // Questa funzione legge il nome del pulsante premuto, e in base ad esso si comporta di conseguenza
     gestisciClickPulsante(tipoAttivita) {
-    if (tipoAttivita === 'SHOP') {
-        console.log("HUD: Apertura del negozio... (Feature da implementare nel futuro!)");
-    } else if (tipoAttivita === 'CIBO') {
-        // Invertiamo lo stato del menu (se è aperto si chiude, se è chiuso si apre)
-        this.menuCiboAperto = !this.menuCiboAperto;
+        if (tipoAttivita === 'SHOP') {
+            console.log("HUD: Apertura del negozio... (Feature da implementare nel futuro!)");
+        } else if (tipoAttivita === 'CIBO') {
+            // Invertiamo lo stato del menu (se è aperto si chiude, se è chiuso si apre)
+            this.menuCiboAperto = !this.menuCiboAperto;
         
-        // Mostriamo o nascondiamo il pannello in base allo stato
-        this.pannelloCibo.setVisible(this.menuCiboAperto);
-        
-        console.log(`HUD: Menu cibo modificato. Stato aperto: ${this.menuCiboAperto}`);
-    } else {
-        console.log(`HUD: Premuto il pulsante ${tipoAttivita}`);
-        // Se premiamo un altro pulsante (es: GIOCO), per sicurezza nascondiamo il menu cibo
-        this.menuCiboAperto = false;
-        this.pannelloCibo.setVisible(false);
+            if (this.menuCiboAperto) {
+                this.aggiornaEVisualizzaMenuCibo();
+            } else {
+                this.pannelloCibo.setVisible(false);
+            }
+        } else {
+            console.log(`HUD: Premuto il pulsante ${tipoAttivita}`);
+            // Se premiamo un altro pulsante (es: GIOCO), per sicurezza nascondiamo il menu cibo
+            this.menuCiboAperto = false;
+            this.pannelloCibo.setVisible(false);
+        }
     }
-}
 
     creaPulsanteShop() {
-        const width = this.scene.cameras.main.width;
-
         // Posizioniamo il tasto Shop in alto a destra
-        const shopX = width - 40;
+        const shopX = this.scene.cameras.main.width - 40;
         const shopY = 50;
 
         // Creiamo il testo del pulsante Shop
         this.btnShop = this.scene.add.text(shopX, shopY, 'SHOP 🛒', {
             fontSize: '18px',
             fill: '#ffffff',
-            backgroundColor: '#e74c3c', // Un bel colore rosso/corallo per farlo risaltare
+            backgroundColor: '#e74c3c',
             padding: { x: 12, y: 8 },
             align: 'center'
         })
-        .setOrigin(1, 0) // Impostiamo l'origine in alto a destra (1, 0) per allinearlo perfettamente al bordo dello schermo
-        .setInteractive({ useHandCursor: true });
+        .setOrigin(1, 0).setInteractive({ useHandCursor: true });
 
         // Effetti visivi Hover
         this.btnShop.on('pointerover', () => this.btnShop.setStyle({ fill: '#f1c40f' }));
         this.btnShop.on('pointerout', () => this.btnShop.setStyle({ fill: '#ffffff' }));
 
         // Gestione del Click
-        this.btnShop.on('pointerdown', () => {
-            this.gestisciClickPulsante('SHOP');
-        });
+        this.btnShop.on('pointerdown', () => this.gestisciClickPulsante('SHOP'));
     }
 
-    creaMenuCibo() {
-    const width = this.scene.cameras.main.width;
-    const height = this.scene.cameras.main.height;
+    // Prepara solo la struttura base del pannello
+    inizializzaPannelloCibo() {
+        // Creo il Contenitore principale del menu
+        this.pannelloCibo = this.scene.add.container(0, 0);
+        this.pannelloCibo.setVisible(false);
+    }
 
-    // 1. Creiamo il Contenitore principale del menu
-    this.pannelloCibo = this.scene.add.container(0, 0);
+    aggiornaEVisualizzaMenuCibo(){
+        this.pannelloCibo.removeAll(true);
 
-    // 2. Disegnamo lo sfondo del menu (un rettangolo grigio scuro sopra i pulsanti dell'HUD)
-    const sfondoY = height - 150; // Posizionato appena sopra i pulsanti principali
-    const graficoSfondo = this.scene.add.graphics();
-    graficoSfondo.fillStyle(0x2c3e50, 0.95); // Colore blu notte semi-trasparente
-    graficoSfondo.fillRect(10, sfondoY, width - 20, 60); // Alto 60px che occupa quasi tutta la larghezza
-    
-    // Aggiungiamo la grafica dello sfondo al contenitore
-    this.pannelloCibo.add(graficoSfondo);
+        const width = this.scene.cameras.main.width;
+        const height = this.scene.cameras.main.height;
+        const capy = this.scene.capybara;
 
-    // 3. Cicliamo il nostro inventario per stampare i testi dei cibi dentro il menu
-    const spazioDisponibile = width - 40;
-    const intervalloX = spazioDisponibile / this.inventarioCibo.length;
+        if (!capy) return;
 
-    this.inventarioCibo.forEach((cibo, index) => {
-        const ciboX = 20 + (intervalloX * index) + (intervalloX / 2);
-        const ciboY = sfondoY + 30; // Centrato verticalmente nel pannello
+        // Disegno lo sfondo del menu
+        const sfondoY = height - 150;
+        const graficoSfondo = this.scene.add.graphics();
+        graficoSfondo.fillStyle(0x2c3e50, 0.95);
+        graficoSfondo.fillRect(10, sfondoY, width - 20, 60);
+        this.pannelloCibo.add(graficoSfondo);
 
-        // Creiamo il testo del singolo cibo
-        const testoCibo = this.scene.add.text(ciboX, ciboY, `${cibo.nome}\nx${cibo.quantita}`, {
-            fontSize: '14px',
-            fill: '#ffffff',
-            align: 'center',
-            backgroundColor: '#34495e',
-            padding: { x: 6, y: 4 }
-        })
-        .setOrigin(0.5)
-        .setInteractive({ useHandCursor: true });
+        // Trasformo le chiavi del database in un array per ciclarle
+        const chiaviCibo = Object.keys(CIBI_DATABASE);
+        const spazioDisponibile = width - 40;
+        const intervalloX = spazioDisponibile / chiaviCibo.length;
 
-        // Effetti hover sul cibo
-        testoCibo.on('pointerover', () => testoCibo.setStyle({ fill: '#f1c40f' }));
-        testoCibo.on('pointerout', () => testoCibo.setStyle({ fill: '#ffffff' }));
+        chiaviCibo.forEach((chiave, index) => {
+            // Raccogli i dati e la quantità del cibo specifico
+            const ciboData = CIBI_DATABASE[chiave]
+            const quantitaAttuale = capy ? capy.inventario[chiave] : 0;
 
-        // Evento di selezione del cibo modificato
-        testoCibo.on('pointerdown', () => {
-            // CONTROLLO: Se il cibo è finito, blocca tutto
-            if (cibo.quantita <= 0) {
-                console.log(`HUD: ${cibo.nome} esaurito! Comprane altro allo SHOP.`);
-                
-                // Effetto visivo flash rosso sul testo per far capire che è vuoto
-                this.scene.tweens.add({
-                    targets: testoCibo,
-                    alpha: 0.3,
-                    duration: 100,
-                    yoyo: true,
-                    repeat: 1
-                });
-                return;
-            }
+            // Definisco le coordinate per dove inserire il cibo specifico in funzione del suo index
+            const ciboX = 20 + (intervalloX * index) + (intervalloX / 2);
+            const ciboY = sfondoY + 30;
 
-            // CONTROLLO EXTRA: Controlliamo se c'è già un cibo fisico sullo schermo 
-            // (Evita di scalare l'inventario se la scena rifiuterà lo spawn)
-            if (this.scene.ciboCorrente && this.scene.ciboCorrente.active) {
-                console.log("HUD: C'è già cibo sullo schermo, non puoi consumarne altro adesso.");
-                return;
-            }
+            // Definisco le proprietà del testo relativo al cibo
+            const testoCibo = this.scene.add.text(ciboX, ciboY, `${ciboData.nome}\nx${quantitaAttuale}`, {
+                fontSize: '14px',
+                fill: '#ffffff',
+                align: 'center',
+                backgroundColor: '#34495e',
+                padding: { x: 6, y: 4 }
+            })
+            .setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-            // 1. Riduciamo la quantità nell'inventario logico
-            cibo.quantita--;
+            // Gestione effetto Hover
+            testoCibo.on('pointerover', () => testoCibo.setStyle({ fill: '#f1c40f' }));
+            testoCibo.on('pointerout', () => {
+                // Cambio del colore in caso dell'assenza del cibo in inventario -- COLORI PROVVISORI --
+                testoCibo.setStyle({ fill: this.scene.capybara.inventario[chiave] === 0 ? '#7f8c8d' : '#ffffff' });
+            });
 
-            // 2. Aggiorniamo visivamente il testo del pulsante (es: "Pomodoro 🍅\nx4")
-            testoCibo.setText(`${cibo.nome}\nx${cibo.quantita}`);
+            // Gestioni del Click / Touch
+            testoCibo.on('pointerdown', () => {
+                const capy = this.scene.capybara;
 
-            // Se è arrivato a zero, coloriamo lo sfondo di grigio scuro per indicare che è vuoto
-            if (cibo.quantita === 0) {
-                testoCibo.setStyle({ fill: '#7f8c8d' });
-            }
+                // Controllo l'inventario reale del Capibara
+                if (capy.inventario[chiave] <= 0) {
+                    // Effetto flash se il cibo selezionato è finito
+                    this.scene.tweens.add({ targets: testoCibo, alpha: 0.3, duration: 100, yoyo: true, repeat: 1 });
+                    return;
+                }
 
-            console.log(`Hai selezionato: ${cibo.id}. Rimasti: ${cibo.quantita}`);
-            
-            // 3. Diciamo alla scena di spawnare l'oggetto
-            this.scene.spawnCibo(cibo.id, cibo.ricarica);
+                if (this.scene.ciboCorrente && this.scene.ciboCorrente.active) return;
 
-            // 4. Chiudiamo il menu
-            this.menuCiboAperto = false;
-            this.pannelloCibo.setVisible(false);
+                // Consumo il cibo dal Capibara
+                capy.usaCibo(chiave);
+
+                // Aggiorno il testo usando i dati del Database + il nuovo inventario
+                testoCibo.setText(`${ciboData.nome}\nx${capy.inventario[chiave]}`);
+                if (capy.inventario[chiave] === 0) {
+                    testoCibo.setStyle({ fill: '#7f8c8d' });
+                }
+
+                // Spawna nella scena passando ID e Ricarica presi dal database
+                this.scene.spawnCibo(ciboData.id, ciboData.ricarica);
+
+                // Chiudo il menu
+                this.menuCiboAperto = false;
+                this.pannelloCibo.setVisible(false);
+            });
+
+            this.pannelloCibo.add(testoCibo);
         });
 
-        // Aggiungiamo il testo del cibo al contenitore del pannello
-        this.pannelloCibo.add(testoCibo);
-    });
-
-    // 4. DI BASE IL PANNELLO DEVE ESSERE NASCOSTO
-    this.pannelloCibo.setVisible(false);
-}
+        this.pannelloCibo.setVisible(true);
+    }
 }

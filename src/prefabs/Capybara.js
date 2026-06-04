@@ -3,6 +3,7 @@
 */
 
 import Phaser from 'phaser';
+import { CIBI_DATABASE } from '../config/CiboConfig.js';
 
 export default class Capybara extends Phaser.Physics.Arcade.Image {
     constructor(scene, x, y, texture) {
@@ -27,6 +28,13 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         this.fame = 100;
         this.felicita = 80;
         this.energia = 100;
+
+        // Inventario iniziale del Capybara
+        this.inventario = {
+            pomodoro: 5,
+            foglia: 3,
+            anguria: 1
+        };
 
         // Avvio il ciclo di degrado dei bisogni
         this.avviaCicloBisogni();
@@ -120,5 +128,13 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
             callbackScope: this,
             loop: true
         });
+    }
+
+    usaCibo(idCibo) {
+        if (this.inventario[idCibo] && this.inventario[idCibo] > 0) {
+            this.inventario[idCibo]--;
+            return true; // Cibo consumato con successo
+        }
+        return false; // Cibo esaurito
     }
 }
