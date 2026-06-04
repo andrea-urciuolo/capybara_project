@@ -88,7 +88,7 @@ export default class UiManager {
             const btn = this.scene.add.text(pulsanteX, pulsantiY, nome, {
                 fontSize: '20px',
                 fill: '#ffffff',
-                backgroundColor: '#34495e',
+                backgroundColor: '#4c1d95',
                 padding: { x: 10, y: 10 },
                 align: 'center'
             })
@@ -184,7 +184,7 @@ export default class UiManager {
         // Disegno lo sfondo del menu
         const sfondoY = height - 150;
         const graficoSfondo = this.scene.add.graphics();
-        graficoSfondo.fillStyle(0x2c3e50, 0.95);
+        graficoSfondo.fillStyle(0x2e1065, 0.95);
         graficoSfondo.fillRect(10, sfondoY, width - 20, 60);
         this.pannelloCibo.add(graficoSfondo);
 
@@ -207,7 +207,7 @@ export default class UiManager {
                 fontSize: '14px',
                 fill: '#ffffff',
                 align: 'center',
-                backgroundColor: '#34495e',
+                backgroundColor: '#5b21b6',
                 padding: { x: 6, y: 4 }
             })
             .setOrigin(0.5).setInteractive({ useHandCursor: true });
