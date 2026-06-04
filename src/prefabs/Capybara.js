@@ -37,6 +37,7 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
             foglia: 3,
             anguria: 1
         };
+        this.monete = 15;
 
         // Avvio il ciclo di degrado dei bisogni
         this.avviaCicloBisogni();
@@ -267,5 +268,15 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         if (this.pulizia >= 40) {
             this.clearTint();
         }
+    }
+
+    modificaMonete(quantita) {
+        // Se stiamo spendendo e non abbiamo abbastanza soldi, blocca l'azione
+        if (quantita < 0 && this.monete + quantita < 0) {
+            return false;
+        }
+        
+        this.monete += quantita;
+        return true;
     }
 }

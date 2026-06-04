@@ -25,11 +25,21 @@ export default class UiManager {
 
         // Crea il menu per il cibo
         this.inizializzaPannelloCibo();
+
+        // Mostra a schermo le monete possedute
+        this.testoMonete = scene.add.text(this.x, this.y - 30, `🪙 Monete: ${this.scene.capybara.monete}`, {
+            fontSize: '18px',
+            fill: '#f1c40f',
+            fontStyle: 'bold'
+        });
     }
 
     // Questo metodo si occupa di disegnare le barre prendendo i dati dal capYbara
     disegna(capybara) {
         if (!capybara) return;
+
+        // Aggiorna il valore del testo delle monete
+        this.testoMonete.setText(`🪙 Monete: ${capybara.monete}`);
 
         // Puliamo lo schermo dai disegni del fotogramma precedente
         this.graphics.clear();
