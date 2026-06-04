@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Capybara_Tamagotchi</string>
+    <string name="title_activity_main">Capybara_Tamagotchi</string>
+    <string name="package_name">com.andreaurciuolo.capygame</string>
+    <string name="custom_url_scheme">com.andreaurciuolo.capygame</string>
+</resources>
