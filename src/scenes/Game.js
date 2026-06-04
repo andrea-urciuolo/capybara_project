@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import Capybara from '../prefabs/Capybara.js';
 import UiManager from '../prefabs/UiManager.js';
 import Cibo from '../prefabs/Cibo.js';
+import Saponetta from '../prefabs/Saponetta.js';
 
 export default class Game extends Phaser.Scene {
     constructor() {
@@ -22,6 +23,9 @@ export default class Game extends Phaser.Scene {
         this.load.image('pomodoro', 'assets/images/tomato.png');
         this.load.image('foglia', 'assets/images/leaf.png');
         this.load.image('anguria', 'assets/images/watermelon.png');
+
+        // Carica la saponetta
+        this.load.image('saponetta', 'assets/images/soap.png');
     }
 
     create() {    
@@ -55,8 +59,11 @@ export default class Game extends Phaser.Scene {
         // Inizializzazione del Capybara
         this.capybara = new Capybara(this, width / 2, height * 0.75, 'player');
 
-        // Inizzializzazione dell'UI Manager
+        // Inizializzazione dell'UI Manager
         this.ui = new UiManager(this);
+
+        // Inizializzazione della saponetta
+        this.saponettaCorrente = null;
 
         // Inizializzazione dei confini del mondo fisico
         const altezzaMondoFisico = height - 120; // Blocco a 120 pixel dal fondo -- DATI PROVVISORI --
@@ -110,6 +117,46 @@ export default class Game extends Phaser.Scene {
         // Gestione dell'overlap
         this.physics.add.overlap(this.capybara, this.ciboCorrente, (capy, cibo) => {
             capy.mangia(cibo);
+        }, null, this);
+    }
+
+    spawnSaponetta() {
+        // CONTROLLO: Se c'è già una saponetta attiva o è notte, non fare nulla
+        if (this.isNotte) return;
+        if (this.saponettaCorrente && this.saponettaCorrente.active) return;
+
+        const width = this.cameras.main.width;
+        const height = this.cameras.main.height;
+
+        // Randomizza lo spawn della saponetta sull'asse X e setto lo spawn sull'asse Y ad 1/3 dello schermo
+        const spawnX = Phaser.Math.Between(50, width - 50);
+        const spawnY = height * 0.33;
+
+        // Spawna la saponetta
+        this.saponettaCorrente = new Saponetta(this, spawnX, spawnY);
+
+        // Gestione OVERLAP continuo (Finché si toccano e l'utente la trascina, lava)
+        this.physics.add.overlap(this.capybara, this.saponettaCorrente, (capy, sapone) => {
+            if (sapone.isBeingDragged) {
+                // Attiva l'effetto grafico delle bolle
+                sapone.attivaBolle(true);
+                
+                // Lava il capibara (+0.5 ad ogni frame di contatto)
+                capy.lavati(0.5);
+
+                // Riproduci un micro suono ogni tot frame
+                if (Phaser.Math.Between(1, 20) === 1) {
+                    this.sound.play('verso_2', { volume: 0.1, detune: 1200 }); // Suono distorto acuto come effetto schiuma - PROVVISORIO -
+                }
+
+                // Se il Capibara è pulito al 100%, la saponetta si consuma
+                if (capy.pulizia >= 100) {
+                    sapone.destroy();
+                    // TODO: Aggiungi un sound effect per aver finito il lavaggio
+                }
+            } else {
+                sapone.attivaBolle(false);
+            }
         }, null, this);
     }
 

@@ -29,6 +29,7 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         this.fame = 100;
         this.felicita = 80;
         this.energia = 100;
+        this.pulizia = 100;
 
         // Inventario iniziale del Capybara
         this.inventario = {
@@ -175,13 +176,15 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
                     // MENTRE DORME: L'energia sale, la fame scende meno velocemente, la felicità non cala
                     this.energia = Math.min(100, this.energia + 6);
                     this.fame = Math.max(0, this.fame - 1);
+                    this.pulizia = Math.max(0, this.pulizia - 0.5);
                 } else if (this.capybaraState === 'walk' || this.capybaraState === 'idle') {
                     // MENTRE È SVEGLIO: Tutte le statistiche calano
                     this.fame = Math.max(0, this.fame - 2);
                     this.energia = Math.max(0, this.energia - 1);
+                    this.pulizia = Math.max(0, this.pulizia - 1.5);
 
-                    // Se è molto affamato o molto stanco la felicità deve calare più velocemente
-                    if (this.fame < 30 || this.energia < 30) {
+                    // Se è molto affamato, molto stanco o molto sporco: la felicità deve calare più velocemente
+                    if (this.fame < 30 || this.energia < 30 || this.pulizia < 40) {
                         this.felicita = Math.max(0, this.felicita - 3);
                     } else {
                         this.felicita = Math.max(0, this.felicita - 0.5);
@@ -189,7 +192,7 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
                 }
 
                 // DEBUG -- PROVVISORIO --
-                console.log(`Stato Capibara -> Fame: ${this.fame} | Energia: ${this.energia} | Felicità: ${this.felicita}`);
+                console.log(`Stato Capibara -> Fame: ${this.fame} | Energia: ${this.energia} | Felicità: ${this.felicita} |Pulizia: ${this.pulizia} |`);
             },
             callbackScope: this,
             loop: true
@@ -255,5 +258,14 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
                 onComplete: () => this.pianificaProssimaAzione()
             });
         }
-    }    
+    }
+    
+    lavati(puntiPulizia) {
+        this.pulizia = Math.min(100, this.pulizia + puntiPulizia);
+        
+        // Se si sta pulendo ed esce dalla zona di pericolo, si toglie subito il filtro negativo
+        if (this.pulizia >= 40) {
+            this.clearTint();
+        }
+    }
 }

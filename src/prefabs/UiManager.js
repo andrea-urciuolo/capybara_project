@@ -117,6 +117,13 @@ export default class UiManager {
                 // Invertiamo lo stato del giorno/notte nella scena
                 const nuovoStatoNotte = !this.scene.isNotte;
                 this.scene.impostaNotte(nuovoStatoNotte);
+        } else if (tipoAttivita === 'LAVAGGIO') {
+            // Chiudo il menu cibo se aperto
+            this.menuCiboAperto = false;
+            this.pannelloCibo.setVisible(false);
+
+            // Chiama il metodo di spawn della saponetta nella scena di gioco
+            this.scene.spawnSaponetta();
         } else {
             console.log(`HUD: Premuto il pulsante ${tipoAttivita}`);
             // Se premiamo un altro pulsante nascondiamo il menu cibo
