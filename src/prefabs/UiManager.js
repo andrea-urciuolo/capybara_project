@@ -98,6 +98,9 @@ export default class UiManager {
         if (tipoAttivita === 'SHOP') {
             console.log("HUD: Apertura del negozio... (Feature da implementare nel futuro!)");
         } else if (tipoAttivita === 'CIBO') {
+            // Impedisce di aprire il menu cibo di notte
+            if (this.scene.isNotte) return;
+
             // Invertiamo lo stato del menu (se è aperto si chiude, se è chiuso si apre)
             this.menuCiboAperto = !this.menuCiboAperto;
         
@@ -106,9 +109,17 @@ export default class UiManager {
             } else {
                 this.pannelloCibo.setVisible(false);
             }
+        } else if (tipoAttivita === 'SONNO') {
+                // Chiudo il menu cibo se aperto
+                this.menuCiboAperto = false;
+                this.pannelloCibo.setVisible(false);
+
+                // Invertiamo lo stato del giorno/notte nella scena
+                const nuovoStatoNotte = !this.scene.isNotte;
+                this.scene.impostaNotte(nuovoStatoNotte);
         } else {
             console.log(`HUD: Premuto il pulsante ${tipoAttivita}`);
-            // Se premiamo un altro pulsante (es: GIOCO), per sicurezza nascondiamo il menu cibo
+            // Se premiamo un altro pulsante nascondiamo il menu cibo
             this.menuCiboAperto = false;
             this.pannelloCibo.setVisible(false);
         }

@@ -48,17 +48,50 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
 
     setupInput() {
         this.on('pointerdown', () => {
-            // Alza la felicità del Capybara ogni click di +5
+            // STATO: DORMENDO
+            if (this.capybaraState === 'sleep') {
+                this.scene.sound.play('verso_1', { volume: 0.7 });
+
+                // Riduce la felicità del capybara se il risveglio è forzato
+                this.felicita = Math.max(0, this.felicita - 15);
+
+                this.capybaraState = 'idle';
+
+                // Animazione di sobbalzo di spavento
+                this.scene.tweens.add({
+                    targets: this,
+                    angle: 0,
+                    scaleY: 0.3,
+                    y: this.y - 40,
+                    duration: 250,
+                    ease: 'Cubic.easeOut',
+                    onComplete: () => {
+                        this.scene.tweens.add({
+                            targets: this,
+                            y: this.y + 40,
+                            duration: 200,
+                            ease: 'Bounce.easeOut',
+                            onComplete: () => {
+                                this.scene.impostaNotte(false);
+                            }
+                        });
+                    }
+                });
+
+                return;
+            }
+
+            // STATO: SVEGLIO
             this.felicita = Math.min(100, this.felicita + 5);
 
-            // Scelta casuale del verso
+            // Scelta random del verso
             const sceltaSuono = Phaser.Math.Between(1, 2);
             this.scene.sound.play(`verso_${sceltaSuono}`, { volume: 0.5 });
 
-            // Codice per il sobbalzo
             this.setVelocityX(0);
             this.capybaraState = 'idle';
 
+            // Codice del sobbalzo
             this.scene.tweens.add({
                 targets: this,
                 y: this.y - 20,
@@ -74,6 +107,11 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
 
     // Loop di movimento
     aggiorna() {
+        if (this.capybaraState === 'sleep') {
+            this.setVelocityX(0);
+            return;
+        } 
+
         if (this.capybaraState === 'walk') {
             const distanza = Math.abs(this.x - this.targetX);
 
@@ -94,6 +132,8 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
     }
 
     pianificaProssimaAzione() {
+        if (this.capybaraState === 'sleep') return;
+
         if (this.azioneTimer) {
             this.azioneTimer.remove();
         }
@@ -111,18 +151,24 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         this.scene.time.addEvent({
             delay: 3000,
             callback: () => {
-                // Riduce la fame e l'energia ogni 3 secondi 
-                this.fame = Math.max(0, this.fame - 2);
-                this.energia = Math.max(0, this.energia - 1);
+                if (this.capybaraState === 'sleep') {
+                    // MENTRE DORME: L'energia sale, la fame scende meno velocemente, la felicità non cala
+                    this.energia = Math.min(100, this.energia + 6);
+                    this.fame = Math.max(0, this.fame - 1);
+                } else if (this.capybaraState === 'walk' || this.capybaraState === 'idle') {
+                    // MENTRE È SVEGLIO: Tutte le statistiche calano
+                    this.fame = Math.max(0, this.fame - 2);
+                    this.energia = Math.max(0, this.energia - 1);
 
-                // Se il Capybara è molto affamato o stanco, la felicità cala più velocemente
-                if (this.fame < 30 || this.energia < 30) {
-                    this.felicita = Math.max(0, this.felicita - 3);
-                } else {
-                    this.felicita = Math.max(0, this.felicita - 0.5);
+                    // Se è molto affamato o molto stanco la felicità deve calare più velocemente
+                    if (this.fame < 30 || this.energia < 30) {
+                        this.felicita = Math.max(0, this.felicita - 3);
+                    } else {
+                        this.felicita = Math.max(0, this.felicita - 0.5);
+                    }
                 }
 
-                // Stampiamo in console lo stato per verificare che stia scendendo
+                // DEBUG -- PROVVISORIO --
                 console.log(`Stato Capibara -> Fame: ${this.fame} | Energia: ${this.energia} | Felicità: ${this.felicita}`);
             },
             callbackScope: this,
@@ -160,4 +206,34 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         }
         return false; // Cibo esaurito
     }
+
+    // Questa funzione attiva o disattiva il sonno anche graficamente
+    setSonno(dorme) {
+        if (dorme) {
+            this.capybaraState = 'sleep';
+            this.setVelocityX(0);
+            if (this.azioneTimer) this.azioneTimer.remove();
+            
+            // Effetto grafico: lo sdraiamo ruotandolo leggermente e rimpicciolendolo sull'asse Y
+            this.scene.tweens.add({
+                targets: this,
+                angle: 90,
+                scaleY: 0.2,
+                duration: 300,
+                ease: 'Quad.easeOut'
+            });
+        } else {
+            this.capybaraState = 'idle';
+            
+            // Lo rimettiamo in piedi
+            this.scene.tweens.add({
+                targets: this,
+                angle: 0,
+                scaleY: 0.3,
+                duration: 300,
+                ease: 'Quad.easeOut',
+                onComplete: () => this.pianificaProssimaAzione()
+            });
+        }
+    }    
 }

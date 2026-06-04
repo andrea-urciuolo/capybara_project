@@ -36,6 +36,16 @@ export default class Game extends Phaser.Scene {
         backgroundGraphics.fillRect(0, 0, width, height);
         backgroundGraphics.setDepth(-1);
     
+        // Overlay per la notte
+        this.overlayNotte = this.add.graphics();
+        this.overlayNotte.fillStyle(0x070a1e, 0.75); // Blu notte molto scuro
+        this.overlayNotte.fillRect(0, 0, width, height);
+        this.overlayNotte.setDepth(0); // Davanti allo sfondo, ma dietro a Capibara (depth 1+) e HUD
+        this.overlayNotte.setVisible(false); // Di giorno è invisibile
+
+        // Variabile flag della scena che ci dice se il capybara dorme o no
+        this.isNotte = false;
+
         // Inizializzazione della scritta -- PROVVISORIO --
         this.add.text(width / 2, height / 4, 'Capybara Deh', {
             fontSize: '32px',
@@ -66,7 +76,24 @@ export default class Game extends Phaser.Scene {
 
     }
 
+    // Funzione che modifica lo stato della scena da giorno a notte
+    impostaNotte(attiva) {
+        this.isNotte = attiva;
+        this.overlayNotte.setVisible(attiva);
+    
+        // Comunica il cambio di stato al Capibara
+        this.capybara.setSonno(attiva);
+
+        // Se diventa notte e c'è del cibo in aria, lo distruggiamo per pulizia
+        if (attiva && this.ciboCorrente && this.ciboCorrente.active) {
+            this.ciboCorrente.destroy();
+        }
+    }
+
     spawnCibo(idCibo, valoreRicarica) {
+        // CONTROLLO: Se è notte non puoi far spawnare cibo
+        if (this.isNotte) return;
+
         // CONTROLLO: Se esiste già un cibo sullo schermo, interrompiamo la funzione e non facciamo nulla
         if (this.ciboCorrente && this.ciboCorrente.active) return;
 
