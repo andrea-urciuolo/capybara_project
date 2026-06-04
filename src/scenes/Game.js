@@ -27,7 +27,16 @@ export default class Game extends Phaser.Scene {
     create() {    
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
+
+        // -- INIZIALIZZAZIONE GRAFICA --
+
+        // Inizializzazione dello sfondo
+        const backgroundGraphics = this.add.graphics();
+        backgroundGraphics.fillGradientStyle(0x2e1065, 0x2e1065, 0xfbcfe8, 0xfbcfe8, 1);
+        backgroundGraphics.fillRect(0, 0, width, height);
+        backgroundGraphics.setDepth(-1);
     
+        // Inizializzazione della scritta -- PROVVISORIO --
         this.add.text(width / 2, height / 4, 'Capybara Deh', {
             fontSize: '32px',
             fill: '#00ff00'
@@ -39,8 +48,8 @@ export default class Game extends Phaser.Scene {
         // Inizzializzazione dell'UI Manager
         this.ui = new UiManager(this);
 
-        // Impostiamo i confini del mondo fisico: X=0, Y=0, Larghezza totale, Altezza ridotta per lasciare spazio all'HUD
-        const altezzaMondoFisico = height - 120; // Blocco a 120 pixel dal fondo (regolabile in base all'altezza dell'HUD)
+        // Inizializzazione dei confini del mondo fisico
+        const altezzaMondoFisico = height - 120; // Blocco a 120 pixel dal fondo -- DATI PROVVISORI --
         this.physics.world.setBounds(0, 0, width, altezzaMondoFisico);
     }
 
