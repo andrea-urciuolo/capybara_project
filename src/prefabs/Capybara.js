@@ -190,6 +190,13 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
                     } else {
                         this.felicita = Math.max(0, this.felicita - 0.5);
                     }
+
+                    // Aggiunge un filtro per simulare lo sporco
+                    if (this.pulizia < 40) {
+                        this.setTint(0x8b5a2b); 
+                    } else {
+                        this.clearTint();
+                    }
                 }
 
                 // DEBUG -- PROVVISORIO --
@@ -278,5 +285,20 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         
         this.monete += quantita;
         return true;
+    }
+
+    // Ferma i movimenti fisici e rimuove il timer delle decisioni casuali
+    disattivaIA() {
+        // Ferma i movimenti fisici e rimuove il timer delle decisioni casuali
+        this.setVelocityX(0);
+        if (this.azioneTimer) {
+            this.azioneTimer.remove();
+        }
+        this.capybaraState = 'minigame';
+    }
+
+    attivaIA() {
+        this.capybaraState = 'idle';
+        this.pianificaProssimaAzione();
     }
 }

@@ -17,6 +17,9 @@ export default class UiManager {
         // Variabile di stato per capire se il menu del cibo è aperto o chiuso
         this.menuCiboAperto = false;
 
+        // Array che contiene i tasti dell'HUD
+        this.pulsantiHUD = [];
+
         // Crea l'HUD dei pulsanti in basso
         this.creaPulsantiHUD();
 
@@ -32,6 +35,23 @@ export default class UiManager {
             fill: '#f1c40f',
             fontStyle: 'bold'
         });
+    }
+
+    // Attiva o disattiva la visibilità dell'HUD
+    setVisibile(stato) {
+        // Mostra/Nasconde il testo delle monete e il pulsante dello Shop
+        this.testoMonete.setVisible(stato);
+        if (this.btnShop) this.btnShop.setVisible(stato);
+
+        // Mostra/Nasconde tutti i pulsanti dell'attività in basso
+        this.pulsantiHUD.forEach(btn => btn.setVisible(stato));
+
+        // Se dobbiamo nascondere tutto, forziamo la chiusura e il reset del pannello cibo
+        if (!stato) {
+            this.menuCiboAperto = false;
+            this.pannelloCibo.setVisible(false);
+            this.graphics.clear(); // Pulisce visivamente le barre grafiche delle statistiche
+        }
     }
 
     // Questo metodo si occupa di disegnare le barre prendendo i dati dal capYbara
@@ -100,6 +120,8 @@ export default class UiManager {
 
             // Gestione del Click / Touch
             btn.on('pointerdown', () => this.gestisciClickPulsante(nome));
+
+            this.pulsantiHUD.push(btn);
         });
     }
 
@@ -107,6 +129,13 @@ export default class UiManager {
     gestisciClickPulsante(tipoAttivita) {
         if (tipoAttivita === 'SHOP') {
             console.log("HUD: Apertura del negozio... (Feature da implementare nel futuro!)");
+        } else if (tipoAttivita === 'GIOCO') {
+            // Chiudo il menu cibo se aperto
+            this.menuCiboAperto = false;
+            this.pannelloCibo.setVisible(false);
+
+            // Avvia il minigioco
+            this.scene.avviaMinigioco();
         } else if (tipoAttivita === 'CIBO') {
             // Impedisce di aprire il menu cibo di notte
             if (this.scene.isNotte) return;
