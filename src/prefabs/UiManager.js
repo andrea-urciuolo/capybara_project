@@ -17,6 +17,9 @@ export default class UiManager {
         // Variabile di stato per capire se il menu del cibo è aperto o chiuso
         this.menuCiboAperto = false;
 
+        //Variabile di stato per capire se il menu delo shop è aperto o chiuso
+        this.menuShopAperto = false;
+
         // Array che contiene i tasti dell'HUD
         this.pulsantiHUD = [];
 
@@ -28,6 +31,9 @@ export default class UiManager {
 
         // Crea il menu per il cibo
         this.inizializzaPannelloCibo();
+
+        // Crea il menu per lo shop
+        this.inizializzaPannelloShop();
 
         // Mostra a schermo le monete possedute
         this.testoMonete = scene.add.text(this.x, this.y - 30, `🪙 Monete: ${this.scene.capybara.monete}`, {
@@ -62,7 +68,11 @@ export default class UiManager {
         if (!stato) {
             this.menuCiboAperto = false;
             this.pannelloCibo.setVisible(false);
-            this.graphics.clear(); // Pulisce visivamente le barre grafiche delle statistiche
+            this.menuShopAperto = false;
+            this.pannelloShop.setVisible(false);
+
+            // Pulisce visivamente le barre grafiche delle statistiche
+            this.graphics.clear();
         }
     }
 
@@ -140,7 +150,21 @@ export default class UiManager {
     // Questa funzione legge il nome del pulsante premuto, e in base ad esso si comporta di conseguenza
     gestisciClickPulsante(tipoAttivita) {
         if (tipoAttivita === 'SHOP') {
-            console.log("HUD: Apertura del negozio... (Feature da implementare nel futuro!)");
+            // Impedisce lo shop di notte
+            if (this.scene.isNotte) return;
+
+            // Chiudo il menu cibo se aperto
+            this.menuCiboAperto = false;
+            this.pannelloCibo.setVisible(false);
+
+            // Inverto lo stato dello shop
+            this.menuShopAperto = !this.menuShopAperto;
+
+            if (this.menuShopAperto) {
+                this.aggiornaEVisualizzaMenuShop();
+            } else {
+                this.pannelloShop.setVisible(false);
+            }
         } else if (tipoAttivita === 'GIOCO') {
             // Chiudo il menu cibo se aperto
             this.menuCiboAperto = false;
@@ -151,6 +175,10 @@ export default class UiManager {
         } else if (tipoAttivita === 'CIBO') {
             // Impedisce di aprire il menu cibo di notte
             if (this.scene.isNotte) return;
+
+            // Chiude il menu dello shop
+            this.menuShopAperto = false;
+            this.pannelloShop.setVisible(false);
 
             // Invertiamo lo stato del menu (se è aperto si chiude, se è chiuso si apre)
             this.menuCiboAperto = !this.menuCiboAperto;
@@ -165,6 +193,10 @@ export default class UiManager {
             this.menuCiboAperto = false;
             this.pannelloCibo.setVisible(false);
 
+            // Chiude il menu dello shop
+            this.menuShopAperto = false;
+            this.pannelloShop.setVisible(false);
+
             // Invertiamo lo stato del giorno/notte nella scena
             const nuovoStatoNotte = !this.scene.isNotte;
             this.scene.impostaNotte(nuovoStatoNotte);
@@ -173,11 +205,18 @@ export default class UiManager {
             this.menuCiboAperto = false;
             this.pannelloCibo.setVisible(false);
 
+            // Chiude il menu dello shop
+            this.menuShopAperto = false;
+            this.pannelloShop.setVisible(false);
+
             // Chiama il metodo di spawn della saponetta nella scena di gioco
             this.scene.spawnSaponetta();
         } else {
-            console.log(`HUD: Premuto il pulsante ${tipoAttivita}`);
-            // Se premiamo un altro pulsante nascondiamo il menu cibo
+            // Chiude il menu dello shop
+            this.menuShopAperto = false;
+            this.pannelloShop.setVisible(false);
+
+            // Chiude il menu del cibo
             this.menuCiboAperto = false;
             this.pannelloCibo.setVisible(false);
         }
@@ -223,7 +262,7 @@ export default class UiManager {
         if (!capy) return;
 
         // Disegno lo sfondo del menu
-        const sfondoY = height - 150;
+        const sfondoY = height - 160;
         const graficoSfondo = this.scene.add.graphics();
         graficoSfondo.fillStyle(0x2e1065, 0.95);
         graficoSfondo.fillRect(10, sfondoY, width - 20, 60);
@@ -304,5 +343,89 @@ export default class UiManager {
 
     nascondiPunteggioMinigioco() {
         this.testoPunteggio.setVisible(false);
+    }
+
+    getCiboData(idCibo) {
+        return CIBI_DATABASE[idCibo];
+    }
+
+    inizializzaPannelloShop() {
+        this.pannelloShop = this.scene.add.container(0, 0);
+        this.pannelloShop.setVisible(false);
+    }
+
+    aggiornaEVisualizzaMenuShop() {
+        this.pannelloShop.removeAll(true);
+
+        const width = this.scene.cameras.main.width;
+        const height = this.scene.cameras.main.height;
+        const capy = this.scene.capybara;
+
+        if (!capy) return;
+
+        // Disegna lo sfondo del menu dello shop (leggermente più in alto del menu cibo o sovrapposto)
+        const sfondoY = height - 160;
+        const graficoSfondo = this.scene.add.graphics();
+        graficoSfondo.fillStyle(0x7c2d12, 0.95); // Colore marroncino/arancio scuro per lo shop
+        graficoSfondo.fillRect(10, sfondoY, width - 20, 60);
+        this.pannelloShop.add(graficoSfondo);
+
+        const chiaviCibo = Object.keys(CIBI_DATABASE);
+        const spazioDisponibile = width - 40;
+        const intervalloX = spazioDisponibile / chiaviCibo.length;
+
+        chiaviCibo.forEach((chiave, index) => {
+            const ciboData = CIBI_DATABASE[chiave];
+            
+            const shopX = 20 + (intervalloX * index) + (intervalloX / 2);
+            const shopY = sfondoY + 30;
+
+            // Mostriamo il nome del cibo e il prezzo in monete
+            const testoArticolo = this.scene.add.text(shopX, shopY, `${ciboData.nome}\n💰 ${ciboData.prezzo}`, {
+                fontSize: '13px',
+                fill: '#ffffff',
+                align: 'center',
+                backgroundColor: '#9a3412',
+                padding: { x: 8, y: 6 }
+            }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+            // Effetto Hover
+            testoArticolo.on('pointerover', () => testoArticolo.setStyle({ fill: '#f1c40f' }));
+            testoArticolo.on('pointerout', () => testoArticolo.setStyle({ fill: '#ffffff' }));
+
+            // Al click invochiamo lo ShopManager della scena
+            testoArticolo.on('pointerdown', () => {
+                // Eseguiamo l'acquisto tramite il manager della scena
+                const acquistato = this.scene.shopManager.acquistaCibo(chiave);
+
+                if (acquistato) {
+                    // Se l'acquisto va a buon fine, facciamo un piccolo effetto di rimbalzo visivo
+                    this.scene.tweens.add({
+                        targets: testoArticolo,
+                        scaleX: 1.1,
+                        scaleY: 1.1,
+                        duration: 100,
+                        yoyo: true,
+                        ease: 'Quad.easeInOut'
+                    });
+                    
+                    // Aggiorna anche il testo delle monete globale immediatamente
+                    this.disegna(capy);
+                } else {
+                    // Effetto flash rosso/trasparente se non hai abbastanza monete
+                    this.scene.tweens.add({
+                        targets: testoArticolo,
+                        alpha: 0.3,
+                        duration: 100,
+                        yoyo: true,
+                        repeat: 1
+                    });
+                }
+            });
+
+            this.pannelloShop.add(testoArticolo);
+        });
+
+        this.pannelloShop.setVisible(true);
     }
 }

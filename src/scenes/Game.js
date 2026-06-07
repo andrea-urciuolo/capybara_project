@@ -4,6 +4,7 @@ import UiManager from '../prefabs/UiManager.js';
 import Cibo from '../prefabs/Cibo.js';
 import Saponetta from '../prefabs/Saponetta.js';
 import WhackACapy from '../prefabs/WhackACapy.js';
+import ShopManager from '../prefabs/ShopManager.js';
 
 export default class Game extends Phaser.Scene {
     constructor() {
@@ -66,6 +67,9 @@ export default class Game extends Phaser.Scene {
         //Inizializzazione del Minigioco
         this.minigiocoWhack = new WhackACapy(this);
 
+        // Inizializza lo Shop
+        this.shopManager = new ShopManager(this);
+
         // Inizializzazione della saponetta
         this.saponettaCorrente = null;
 
@@ -112,7 +116,7 @@ export default class Game extends Phaser.Scene {
 
     // Callback attivata da WhackACapy quando il gioco si conclude
     alTermineDelMinigioco(vittoria) {
-        // 1. Ripristina l'HUD globale e tutti i testi standard della scena
+        // Ripristina l'HUD globale e tutti i testi standard della scena
         if (typeof this.ui.setVisibile === "function") this.ui.setVisibile(true);
         this.children.list.forEach(child => {
             if (child instanceof Phaser.GameObjects.Text) {
@@ -120,20 +124,20 @@ export default class Game extends Phaser.Scene {
             }
         });
 
-        // 2. Nascondi il punteggio del minigioco
+        // Nascondi il punteggio del minigioco
         this.ui.nascondiPunteggioMinigioco();
 
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
         
-        // 3. CORREZIONE INPUT: Forza il Capybara a tornare interattivo
+        // Forza il Capybara a tornare interattivo
         this.capybara.setInteractive();
         
-        // 4. Pulisce l'input del minigioco e reimposta quello standard
+        // Pulisce l'input del minigioco e reimposta quello standard
         this.capybara.removeAllListeners('pointerdown');
         this.capybara.setupInput();
         
-        // 5. Riposiziona a terra, riaccende la fisica e riattiva l'IA della camminata
+        // Riposiziona a terra, riaccende la fisica e riattiva l'IA della camminata
         this.capybara.setPosition(width / 2, height * 0.75);
         this.capybara.setVisible(true);
         this.capybara.attivaIA();

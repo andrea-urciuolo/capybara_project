@@ -20,7 +20,7 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 300 }, // Gravità verso il basso (es. per un gioco a piattaforme)
-            debug: true // Mostra i rettangoli di collisione (utilissimo in sviluppo)
+            debug: false // Mostra i rettangoli di collisione (utilissimo in sviluppo)
         }
     },
     
