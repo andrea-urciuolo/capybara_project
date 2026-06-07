@@ -54,6 +54,9 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
             // CONTROLLO: Se il capybara sta saltando gli impedisce di saltare di nuovo
             if (this.isJumping) return;
 
+            // CONTROLLO: Se è in corso il minigioco, interrompe il salto
+            if (this.capybaraState === 'minigame') return;
+
             // STATO: DORMENDO
             if (this.capybaraState === 'sleep') {
                 this.isJumping = true;
@@ -289,16 +292,30 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
 
     // Ferma i movimenti fisici e rimuove il timer delle decisioni casuali
     disattivaIA() {
-        // Ferma i movimenti fisici e rimuove il timer delle decisioni casuali
+        this.capybaraState = 'minigame';
         this.setVelocityX(0);
+        
         if (this.azioneTimer) {
             this.azioneTimer.remove();
         }
-        this.capybaraState = 'minigame';
+
+        if (this.body) {
+            this.body.enable = false;
+        }
+        
+        // Resetta lo stato di salto per evitare blocchi logici
+        this.isJumping = false;
     }
 
+    // Riabilita il corpo fisico al termine del gioco
     attivaIA() {
+        if (this.body) {
+            this.body.enable = true;
+            this.body.setVelocity(0, 0);
+        }
+
         this.capybaraState = 'idle';
+        this.isJumping = false;
         this.pianificaProssimaAzione();
     }
 }

@@ -3,6 +3,7 @@ import Capybara from '../prefabs/Capybara.js';
 import UiManager from '../prefabs/UiManager.js';
 import Cibo from '../prefabs/Cibo.js';
 import Saponetta from '../prefabs/Saponetta.js';
+import WhackACapy from '../prefabs/WhackACapy.js';
 
 export default class Game extends Phaser.Scene {
     constructor() {
@@ -11,7 +12,7 @@ export default class Game extends Phaser.Scene {
 
     preload() {
         console.log('Scena Game: Preload in corso...');
-        
+
         // Carica gli sprite del Capybara
         this.load.image('player', 'assets/images/capybara.png');
 
@@ -28,7 +29,7 @@ export default class Game extends Phaser.Scene {
         this.load.image('saponetta', 'assets/images/soap.png');
     }
 
-    create() {    
+    create() {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
@@ -39,7 +40,7 @@ export default class Game extends Phaser.Scene {
         backgroundGraphics.fillGradientStyle(0x2e1065, 0x2e1065, 0xfbcfe8, 0xfbcfe8, 1);
         backgroundGraphics.fillRect(0, 0, width, height);
         backgroundGraphics.setDepth(-1);
-    
+
         // Overlay per la notte
         this.overlayNotte = this.add.graphics();
         this.overlayNotte.fillStyle(0x070a1e, 0.75); // Blu notte molto scuro
@@ -62,31 +63,20 @@ export default class Game extends Phaser.Scene {
         // Inizializzazione dell'UI Manager
         this.ui = new UiManager(this);
 
+        //Inizializzazione del Minigioco
+        this.minigiocoWhack = new WhackACapy(this);
+
         // Inizializzazione della saponetta
         this.saponettaCorrente = null;
 
         // Inizializzazione dei confini del mondo fisico
         const altezzaMondoFisico = height - 120; // Blocco a 120 pixel dal fondo -- DATI PROVVISORI --
         this.physics.world.setBounds(0, 0, width, altezzaMondoFisico);
-
-        // Inizializzazione variabili per il minigioco
-        this.minigiocoAttivo = false;
-        this.punteggioMinigioco = 0;
-        this.minigameTimer = null;
-
-        // Testo del punteggio
-        this.testoPunteggio = this.add.text(width / 2, 80, '', {
-            fontSize: '36px',
-            fill: '#ffffff',
-            fontStyle: 'bold',
-            stroke: '#2e1065',
-            strokeThickness: 6
-        }).setOrigin(0.5).setDepth(20).setVisible(false);
     }
 
     update() {
         // Se il minigioco è in corso, blocchiamo temporaneamente il rendering dell'HUD standard
-        if (this.minigiocoAttivo) return;
+        if (this.minigiocoWhack.attivo) return;
 
         // Ridisegna il Capybara ogni frame
         if (this.capybara) {
@@ -100,132 +90,55 @@ export default class Game extends Phaser.Scene {
 
     }
 
-    // Funzione che gestisce la logica di attivazione del minigioco
+    // Gestore dell'infrastruttura del minigioco
     avviaMinigioco() {
-        if (this.minigiocoAttivo || this.isNotte) return;
+        if (this.minigiocoWhack.attivo || this.isNotte) return;
 
-        this.minigiocoAttivo = true;
-        this.punteggioMinigioco = 0;
-
-        // Pulizia e interruzione elementi attivi a schermo
+        // Pulizia oggetti attivi
         if (this.ciboCorrente && this.ciboCorrente.active) this.ciboCorrente.destroy();
         if (this.saponettaCorrente && this.saponettaCorrente.active) this.saponettaCorrente.destroy();
 
-        // Nascondi l'interfaccia utente standard
-        if (typeof this.ui.setVisibile === "function") {
-            this.ui.setVisibile(false); 
-        }
-        // Forza una pulizia dello schermo cancellando i vecchi testi dell'UI se necessario
+        // Nasconde HUD globale
+        if (typeof this.ui.setVisibile === "function") this.ui.setVisibile(false);
         this.children.list.forEach(child => {
-            if (child instanceof Phaser.GameObjects.Text && child !== this.testoPunteggio) {
+            if (child instanceof Phaser.GameObjects.Text) {
                 child.setVisible(false);
             }
         });
 
-        // Mostra e resetta la grafica del punteggio del minigioco
-        this.testoPunteggio.setText(`Punti: 0 / 10`);
-        this.testoPunteggio.setVisible(true);
-
-        // Disattiva i movimenti casuali dell'IA del Capybara
-        this.capybara.disattivaIA();
-        
-        // Rimuove l'evento pointerdown del salto
-        this.capybara.removeAllListeners('pointerdown');
-
-        // Aggancia la logica di cattura del minigioco
-        this.capybara.on('pointerdown', () => {
-            this.gestisciCatturaCapybara();
-        });
-
-        // Inizia il loop delle apparizioni
-        this.generaApparizione();
+        // Avvia il Minigioco
+        this.minigiocoWhack.avvia();
     }
 
-    // Funzione che gestisce la logica di apparizione dei target nel minigioco
-    generaApparizione() {
-        if (!this.minigiocoAttivo) return;
-
-        // Controllo vittoria: se ha raggiunto 10 punti il gioco finisce
-        if (this.punteggioMinigioco >= 10) {
-            this.terminaMinigioco(true);
-            return;
-        }
-
-        const width = this.cameras.main.width;
-        const height = this.cameras.main.height;
-
-        // Calcola una posizione completamente casuale nello schermo lasciando margini di sicurezza
-        const randomX = Phaser.Math.Between(100, width - 100);
-        const randomY = Phaser.Math.Between(150, height - 150);
-
-        // Posiziona il capybara e forzane la visibilità
-        this.capybara.setPosition(randomX, randomY);
-        this.capybara.setVisible(true);
-
-        // Imposta un tempo massimo per cliccare (1.2 secondi) prima che si nasconda
-        this.minigameTimer = this.time.delayedCall(1200, () => {
-            this.capybara.setVisible(false);
-            
-            // Pausa a schermo vuoto di 400 millisecondi prima della prossima ricomparsa
-            this.time.delayedCall(400, () => {
-                this.generaApparizione();
-            });
-        });
-    }
-
-    // Funzione che gestisce il click del capybara nel minigame
-    gestisciCatturaCapybara() {
-        // Il giocatore ha fatto in tempo: elimina il timer di sparizione automatica
-        if (this.minigameTimer) this.minigameTimer.remove();
-
-        // Incrementa punteggio e aggiorna interfaccia
-        this.punteggioMinigioco++;
-        this.testoPunteggio.setText(`Punti: ${this.punteggioMinigioco} / 10`);
-        this.capybara.modificaMonete(1);
-
-        // Riproduce un verso random di feedback positivo
-        const suonoFeedback = Phaser.Math.Between(1, 2);
-        this.sound.play(`verso_${suonoFeedback}`, { volume: 0.6 });
-
-        // Nasconde il capybara all'istante
-        this.capybara.setVisible(false);
-
-        // Breve attesa e poi genera la prossima posizione
-        this.time.delayedCall(300, () => {
-            this.generaApparizione();
-        });
-    }
-
-    terminaMinigioco(vittoria) {
-        this.minigiocoAttivo = false;
-        if (this.minigameTimer) this.minigameTimer.remove();
-
-        // Nascondi la grafica del minigioco
-        this.testoPunteggio.setVisible(false);
-
-        // Ripristina la visibilità di tutti i testi e dell'HUD standard
-        if (typeof this.ui.setVisibile === "function") {
-            this.ui.setVisibile(true);
-        }
+    // Callback attivata da WhackACapy quando il gioco si conclude
+    alTermineDelMinigioco(vittoria) {
+        // 1. Ripristina l'HUD globale e tutti i testi standard della scena
+        if (typeof this.ui.setVisibile === "function") this.ui.setVisibile(true);
         this.children.list.forEach(child => {
-            if (child instanceof Phaser.GameObjects.Text && child !== this.testoPunteggio) {
+            if (child instanceof Phaser.GameObjects.Text) {
                 child.setVisible(true);
             }
         });
 
-        // Riposiziona il Capybara alle coordinate fisse iniziali della terra ferma
+        // 2. Nascondi il punteggio del minigioco
+        this.ui.nascondiPunteggioMinigioco();
+
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
-        this.capybara.setPosition(width / 2, height * 0.75);
-        this.capybara.setVisible(true);
-
-        // Reset dei listener di input del minigioco e ripristino del comportamento standard (salto)
+        
+        // 3. CORREZIONE INPUT: Forza il Capybara a tornare interattivo
+        this.capybara.setInteractive();
+        
+        // 4. Pulisce l'input del minigioco e reimposta quello standard
         this.capybara.removeAllListeners('pointerdown');
         this.capybara.setupInput();
-
-        // Riattiva l'intelligenza artificiale per i movimenti casuali a terra
+        
+        // 5. Riposiziona a terra, riaccende la fisica e riattiva l'IA della camminata
+        this.capybara.setPosition(width / 2, height * 0.75);
+        this.capybara.setVisible(true);
         this.capybara.attivaIA();
 
+        // Assegna il premio finale
         if (vittoria) {
             this.capybara.modificaMonete(3);
         }
@@ -233,11 +146,11 @@ export default class Game extends Phaser.Scene {
 
     // Funzione che modifica lo stato della scena da giorno a notte
     impostaNotte(attiva) {
-        if (this.minigiocoAttivo) return;
+        if (this.minigiocoWhack.attivo) return;
 
         this.isNotte = attiva;
         this.overlayNotte.setVisible(attiva);
-    
+
         // Comunica il cambio di stato al Capibara
         this.capybara.setSonno(attiva);
 
@@ -290,7 +203,7 @@ export default class Game extends Phaser.Scene {
             if (sapone.isBeingDragged) {
                 // Attiva l'effetto grafico delle bolle
                 sapone.attivaBolle(true);
-                
+
                 // Lava il capibara (+0.5 ad ogni frame di contatto)
                 capy.lavati(0.5);
 

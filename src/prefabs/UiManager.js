@@ -35,6 +35,18 @@ export default class UiManager {
             fill: '#f1c40f',
             fontStyle: 'bold'
         });
+
+        const width = this.scene.cameras.main.width;
+        const height = this.scene.cameras.main.height;
+
+        // Crea il testo del punteggio del minigioco
+        this.testoPunteggio = this.scene.add.text(width / 2, height / 4, '', {
+            fontSize: '36px',
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            stroke: '#2e1065',
+            strokeThickness: 6
+        }).setOrigin(0.5).setDepth(20).setVisible(false);
     }
 
     // Attiva o disattiva la visibilità dell'HUD
@@ -91,11 +103,11 @@ export default class UiManager {
         const height = this.scene.cameras.main.height;
 
         // Posiziono i pulsanti nella parte bassa
-        const pulsantiY = height - 80; 
+        const pulsantiY = height - 80;
 
         // Definizione dei 4 nomi delle attività principali
         const attivita = ['CIBO', 'GIOCO', 'SONNO', 'LAVAGGIO'];
-        
+
         // Calcolo lo spazio orizzontale in modo che i 4 pulsanti siano distribuiti equamente
         const spazioDisponibile = width - 40; // Margine di 20px ai lati
         const intervalloX = spazioDisponibile / 4;
@@ -112,7 +124,7 @@ export default class UiManager {
                 padding: { x: 10, y: 10 },
                 align: 'center'
             })
-            .setOrigin(0.5).setInteractive({ useHandCursor: true }); // Cambia il cursore in una manina su PC
+                .setOrigin(0.5).setInteractive({ useHandCursor: true }); // Cambia il cursore in una manina su PC
 
             // Gestione visiva dell'effetto "Hover" (quando ci passi sopra col mouse)
             btn.on('pointerover', () => btn.setStyle({ fill: '#f1c40f' }));
@@ -142,20 +154,20 @@ export default class UiManager {
 
             // Invertiamo lo stato del menu (se è aperto si chiude, se è chiuso si apre)
             this.menuCiboAperto = !this.menuCiboAperto;
-        
+
             if (this.menuCiboAperto) {
                 this.aggiornaEVisualizzaMenuCibo();
             } else {
                 this.pannelloCibo.setVisible(false);
             }
         } else if (tipoAttivita === 'SONNO') {
-                // Chiudo il menu cibo se aperto
-                this.menuCiboAperto = false;
-                this.pannelloCibo.setVisible(false);
+            // Chiudo il menu cibo se aperto
+            this.menuCiboAperto = false;
+            this.pannelloCibo.setVisible(false);
 
-                // Invertiamo lo stato del giorno/notte nella scena
-                const nuovoStatoNotte = !this.scene.isNotte;
-                this.scene.impostaNotte(nuovoStatoNotte);
+            // Invertiamo lo stato del giorno/notte nella scena
+            const nuovoStatoNotte = !this.scene.isNotte;
+            this.scene.impostaNotte(nuovoStatoNotte);
         } else if (tipoAttivita === 'LAVAGGIO') {
             // Chiudo il menu cibo se aperto
             this.menuCiboAperto = false;
@@ -184,7 +196,7 @@ export default class UiManager {
             padding: { x: 12, y: 8 },
             align: 'center'
         })
-        .setOrigin(1, 0).setInteractive({ useHandCursor: true });
+            .setOrigin(1, 0).setInteractive({ useHandCursor: true });
 
         // Effetti visivi Hover
         this.btnShop.on('pointerover', () => this.btnShop.setStyle({ fill: '#f1c40f' }));
@@ -201,7 +213,7 @@ export default class UiManager {
         this.pannelloCibo.setVisible(false);
     }
 
-    aggiornaEVisualizzaMenuCibo(){
+    aggiornaEVisualizzaMenuCibo() {
         this.pannelloCibo.removeAll(true);
 
         const width = this.scene.cameras.main.width;
@@ -239,7 +251,7 @@ export default class UiManager {
                 backgroundColor: '#5b21b6',
                 padding: { x: 6, y: 4 }
             })
-            .setOrigin(0.5).setInteractive({ useHandCursor: true });
+                .setOrigin(0.5).setInteractive({ useHandCursor: true });
 
             // Gestione effetto Hover
             testoCibo.on('pointerover', () => testoCibo.setStyle({ fill: '#f1c40f' }));
@@ -282,5 +294,15 @@ export default class UiManager {
         });
 
         this.pannelloCibo.setVisible(true);
+    }
+
+    // Funzioni per la visualizzazione dell'HUD del minigioco
+    mostraPunteggioMinigioco(punti) {
+        this.testoPunteggio.setText(`Punti: ${punti} / 10`);
+        this.testoPunteggio.setVisible(true);
+    }
+
+    nascondiPunteggioMinigioco() {
+        this.testoPunteggio.setVisible(false);
     }
 }
