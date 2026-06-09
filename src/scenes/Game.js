@@ -29,6 +29,15 @@ export default class Game extends Phaser.Scene {
 
         // Carica la saponetta
         this.load.image('saponetta', 'assets/images/soap.png');
+
+        // Soud-effects
+        this.load.audio('moneta_suono_1', 'assets/audio/coin_sound_1.mp3');
+        this.load.audio('cassa_monetaria', 'assets/audio/cash_register.mp3');
+        this.load.audio('verso_mangiare_1', 'assets/audio/eating_sound_1.mp3');
+
+        // Musica
+        this.load.audio('musica_giorno', 'assets/audio/background_music.mp3');
+        this.load.audio('musica_notte', 'assets/audio/night_music.mp3');
     }
 
     create() {
@@ -77,6 +86,17 @@ export default class Game extends Phaser.Scene {
 
         // Inizializzazione della saponetta
         this.saponettaCorrente = null;
+
+        // Avvia la musica di sottofondo in modalità loop
+        this.musicaGiorno = this.sound.add('musica_giorno', { loop: true, volume: 0.3 });
+        this.musicaNotte = this.sound.add('musica_notte', { loop: true, volume: 0 }); // Parte muta
+
+        // Controlliamo lo stato iniziale (se il salvataggio ripristina la notte, facciamo partire la notte)
+        if (this.isNotte) {
+            this.musicaNotte.setVolume(0.3).play();
+        } else {
+            this.musicaGiorno.setVolume(0.3).play();
+        }
 
         // Inizializzazione dei confini del mondo fisico
         const altezzaMondoFisico = height - 120; // Blocco a 120 pixel dal fondo -- DATI PROVVISORI --
@@ -147,14 +167,14 @@ export default class Game extends Phaser.Scene {
 
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
-        
+
         // Forza il Capybara a tornare interattivo
         this.capybara.setInteractive();
-        
+
         // Pulisce l'input del minigioco e reimposta quello standard
         this.capybara.removeAllListeners('pointerdown');
         this.capybara.setupInput();
-        
+
         // Riposiziona a terra, riaccende la fisica e riattiva l'IA della camminata
         this.capybara.setPosition(width / 2, height * 0.75);
         this.capybara.setVisible(true);
@@ -175,6 +195,43 @@ export default class Game extends Phaser.Scene {
 
         this.isNotte = attiva;
         this.overlayNotte.setVisible(attiva);
+
+        if (this.isNotte) {
+            // MUSICA NOTTE
+            // Sfumiamo la musica del giorno a 0 in 1 secondo (1000 ms)
+            this.tweens.add({
+                targets: this.musicaGiorno,
+                volume: 0,
+                duration: 1000,
+                onComplete: () => this.musicaGiorno.stop()
+            });
+
+            // Facciamo partire la musica della notte sfumandola verso l'alto
+            this.musicaNotte.play();
+            this.tweens.add({
+                targets: this.musicaNotte,
+                volume: 0.3,
+                duration: 1000
+            });
+            
+        } else {
+            // MUSICA GIORNO
+            // Sfumiamo la musica della notte a 0
+            this.tweens.add({
+                targets: this.musicaNotte,
+                volume: 0,
+                duration: 1000,
+                onComplete: () => this.musicaNotte.stop()
+            });
+
+            // Facciamo partire la musica del giorno sfumandola verso l'alto
+            this.musicaGiorno.play();
+            this.tweens.add({
+                targets: this.musicaGiorno,
+                volume: 0.3,
+                duration: 1000
+            });
+        }
 
         // Comunica il cambio di stato al Capibara
         this.capybara.setSonno(attiva);

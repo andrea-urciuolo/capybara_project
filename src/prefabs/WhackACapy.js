@@ -79,8 +79,7 @@ export default class WhackACapy {
 
         // Feedback economico e sonoro intermedi
         this.scene.capybara.modificaMonete(1);
-        const suonoFeedback = Phaser.Math.Between(1, 2);
-        this.scene.sound.play(`verso_${suonoFeedback}`, { volume: 0.6 });
+        this.scene.sound.play('moneta_suono_1', { volume: 0.6 });
 
         this.scene.capybara.setVisible(false);
 

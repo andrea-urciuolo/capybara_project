@@ -26,7 +26,7 @@ export default class ShopManager {
             }
 
             // Riproduci un effetto sonoro di feedback -- VERSO PROVVISORIO (SCARICANE DI PIU') --
-            this.scene.sound.play('verso_2', { volume: 0.5 });
+            this.scene.sound.play('cassa_monetaria', { volume: 0.5 });
             
             return true;
         } else {

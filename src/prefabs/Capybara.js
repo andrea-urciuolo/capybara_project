@@ -220,9 +220,8 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         // Incrementa la fame usando il valore specifico del cibo
         this.fame = Math.min(100, this.fame + cibo.ricarica);
 
-        // Suono e animazione (gestiti dal Capybara)
-        const versoCasuale = Phaser.Math.Between(1, 2);
-        this.scene.sound.play(`verso_${versoCasuale}`, { volume: 0.6 });
+        // Suono e animazione
+        this.scene.sound.play('verso_mangiare_1', { volume: 0.6 });
 
         this.scene.tweens.add({
             targets: this,
