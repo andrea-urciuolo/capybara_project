@@ -5,6 +5,7 @@ import Cibo from '../prefabs/Cibo.js';
 import Saponetta from '../prefabs/Saponetta.js';
 import WhackACapy from '../prefabs/WhackACapy.js';
 import ShopManager from '../prefabs/ShopManager.js';
+import SaveManager from '../prefabs/SaveManager.js';
 
 export default class Game extends Phaser.Scene {
     constructor() {
@@ -31,6 +32,10 @@ export default class Game extends Phaser.Scene {
     }
 
     create() {
+        // Inizializza il gestore per i salvataggi
+        this.saveManager = new SaveManager(this);
+        const datiCaricati = this.saveManager.caricaGame();
+
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
@@ -59,7 +64,7 @@ export default class Game extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Inizializzazione del Capybara
-        this.capybara = new Capybara(this, width / 2, height * 0.75, 'player');
+        this.capybara = new Capybara(this, width / 2, height * 0.75, 'player', datiCaricati);
 
         // Inizializzazione dell'UI Manager
         this.ui = new UiManager(this);
@@ -76,6 +81,19 @@ export default class Game extends Phaser.Scene {
         // Inizializzazione dei confini del mondo fisico
         const altezzaMondoFisico = height - 120; // Blocco a 120 pixel dal fondo -- DATI PROVVISORI --
         this.physics.world.setBounds(0, 0, width, altezzaMondoFisico);
+
+        // AUTO-SALVATAGGIO: Salva automaticamente il gioco ogni 10 secondi
+        this.time.addEvent({
+            delay: 10000,
+            callback: () => this.saveManager.salvaGame(),
+            callbackScope: this,
+            loop: true
+        });
+
+        // SALVATAGGIO DI SICUREZZA: Salva anche se l'utente chiude la scheda all'improvviso
+        window.addEventListener('beforeunload', () => {
+            this.saveManager.salvaGame();
+        });
     }
 
     update() {
@@ -146,6 +164,9 @@ export default class Game extends Phaser.Scene {
         if (vittoria) {
             this.capybara.modificaMonete(3);
         }
+
+        // Salvataggio di sicurezza
+        this.saveManager.salvaGame();
     }
 
     // Funzione che modifica lo stato della scena da giorno a notte

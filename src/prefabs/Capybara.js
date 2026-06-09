@@ -6,7 +6,7 @@ import Phaser from 'phaser';
 import { CIBI_DATABASE } from '../config/CiboConfig.js';
 
 export default class Capybara extends Phaser.Physics.Arcade.Image {
-    constructor(scene, x, y, texture) {
+    constructor(scene, x, y, texture, datiSalvati = null) {
         super(scene, x, y, texture);
         
         scene.add.existing(this);
@@ -25,19 +25,23 @@ export default class Capybara extends Phaser.Physics.Arcade.Image {
         this.azioneTimer = null;
         this.isJumping = false;
 
-        // Statistiche del Capybara (da 0 a 100)
-        this.fame = 100;
-        this.felicita = 80;
-        this.energia = 100;
-        this.pulizia = 100;
-
-        // Inventario iniziale del Capybara
-        this.inventario = {
-            pomodoro: 5,
-            foglia: 3,
-            anguria: 1
-        };
-        this.monete = 15;
+        // Se esistono dati salvati, vengono scaricati dal LocalStorage
+        if (datiSalvati) {
+            this.fame = datiSalvati.fame;
+            this.felicita = datiSalvati.felicita;
+            this.energia = datiSalvati.energia;
+            this.pulizia = datiSalvati.pulizia;
+            this.inventario = datiSalvati.inventario;
+            this.monete = datiSalvati.monete;
+        } else {
+            // Statistiche di default
+            this.fame = 100;
+            this.felicita = 80;
+            this.energia = 100;
+            this.pulizia = 100;
+            this.inventario = { pomodoro: 5, foglia: 3, anguria: 1 };
+            this.monete = 15;
+        }
 
         // Avvio il ciclo di degrado dei bisogni
         this.avviaCicloBisogni();
